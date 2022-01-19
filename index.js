@@ -1,24 +1,10 @@
-const http = require('http');
-const express = require('express');
-const cors = require('cors');
-const MessagingResponse = require('twilio').twiml.MessagingResponse;
+const http = require('http')
 
-const app = express();
-app.use(cors());
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World</h1>');
-});
-app.post('/sms', (req, res) => {
-  const twiml = new MessagingResponse();
+const app = http.createServer((request, response) => {
+  response.writeHead(200, { 'Content-Type': 'text/plain' })
+  response.end('Hello World')
+})
 
-  const message = twiml.message();
-  message.body('The Robots are coming! Head for the hills!');
-  message.media('https://farm8.staticflickr.com/7090/6941316406_80b4d6d50e_z_d.jpg');
-
-  res.writeHead(200, {'Content-Type': 'text/xml'});
-  res.end(twiml.toString());
-});
-
-http.createServer(app).listen(process.env.PORT, () => {
-  console.log('Express server listening on port 1337');
-});
+const PORT = process.env.PORT
+app.listen(PORT)
+console.log(`Server running on port ${PORT}`)
