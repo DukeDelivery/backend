@@ -1,11 +1,22 @@
-const accountSid = 'ACb4d281fe99edf5d56fb2bfb2e1147e2c';
-const authToken = '9d49eb9a4535d36115cec39fcec7527d';
-const client = require('twilio')(accountSid, authToken);
+const http = require('http');
+const express = require('express');
+const MessagingResponse = require('twilio').twiml.MessagingResponse;
 
-client.messages
-  .create({
-     body: 'Hello World',
-     from: '+19892814706',
-     to: '+19899542007'
-   })
-  .then(message => console.log(message.sid));
+const app = express();
+app.get('/', (req, res) => {
+  res.send('<h1>Hello World</h1>');
+})
+app.post('/sms', (req, res) => {
+  const twiml = new MessagingResponse();
+
+  const message = twiml.message();
+  message.body('The Robots are coming! Head for the hills!');
+  message.media('https://farm8.staticflickr.com/7090/6941316406_80b4d6d50e_z_d.jpg');
+
+  res.writeHead(200, {'Content-Type': 'text/xml'});
+  res.end(twiml.toString());
+});
+
+http.createServer(app).listen(1337, () => {
+  console.log('Express server listening on port 1337');
+});
