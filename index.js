@@ -1,11 +1,13 @@
 const http = require('http');
 const express = require('express');
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
+const cors = require('cors')
 
 const app = express();
+app.use(cors());
 app.get('/', (req, res) => {
-  res.send('<h1>Hello World</h1>')
-})
+  res.send('<h1>Hello World</h1>');
+});
 app.post('/sms', (req, res) => {
   const twiml = new MessagingResponse();
 
