@@ -1,24 +1,23 @@
 const http = require('http');
 const express = require('express');
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
-const cors = require('cors')
+const bodyParser = require('body-parser');
+const textbot = require('./textbot');
 
 const app = express();
-app.use(cors());
-app.get('/', (req, res) => {
-  res.send('<h1>Hello World</h1>');
-});
+
+app.use(bodyParser.urlencoded({ extended: false }));
+
 app.post('/sms', (req, res) => {
   const twiml = new MessagingResponse();
-
   const message = twiml.message();
-  message.body('The Robots are coming! Head for the hills!');
-  message.media('https://farm8.staticflickr.com/7090/6941316406_80b4d6d50e_z_d.jpg');
+
+  message.body(textbot(req, res));
 
   res.writeHead(200, {'Content-Type': 'text/xml'});
   res.end(twiml.toString());
 });
 
-http.createServer(app).listen(process.env.PORT, () => {
-  console.log('Express server listening on port 1337');
+http.createServer(app).listen(3001, () => {
+  console.log('Express server listening on port 3001');
 });
