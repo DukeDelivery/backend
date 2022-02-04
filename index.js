@@ -1,5 +1,6 @@
 const http = require('http');
 const express = require('express');
+require('dotenv').config();
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const bodyParser = require('body-parser');
 const textbot = require('./textbot');

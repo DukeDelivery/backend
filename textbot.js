@@ -1,4 +1,4 @@
 const main = (req, res) => {
-  return 'textbot';
+  return req.body.Body;
 };
 module.exports = main;
