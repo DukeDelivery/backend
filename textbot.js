@@ -13,6 +13,9 @@ const main = async (req, res) => {
     await user.save();
     return 'GREETING MESSAGE';
   }
+  if (query === 'none') {
+    
+  }
   if (message.Body.toLowerCase() !== 'delivery')
   return 'RETURNING MESSAGE';
 };
