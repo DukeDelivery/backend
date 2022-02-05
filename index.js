@@ -4,17 +4,22 @@ require('dotenv').config();
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const bodyParser = require('body-parser');
 const textbot = require('./textbot');
+const mongoose = require('mongoose');
 
 const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.post('/sms', (req, res) => {
+app.get('/', (req, res) => {
+  res.send('Server online');
+})
+app.post('/sms', async (req, res) => {
+
   const twiml = new MessagingResponse();
   const message = twiml.message();
 
-  message.body(textbot(req, res));
-
+  message.body(await textbot(req, res));
+  mongoose.connection.close();
   res.writeHead(200, {'Content-Type': 'text/xml'});
   res.end(twiml.toString());
 });
