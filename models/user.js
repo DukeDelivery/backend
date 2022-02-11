@@ -11,13 +11,13 @@ const userSchema = new mongoose.Schema({
     contact: String,
     gate: Number, 
   }
-})
-userSchema.set('toJSON', {
+});
+/*userSchema.set('toJSON', {
   transform: (document, returned) => {
     returned.id = returned._id.toString();
     delete returned._id;
     delete returned.__v;
   }
-});
+});*/
 
 module.exports = mongoose.model('User', userSchema);
