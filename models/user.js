@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 
-const userSchema = {
+const userSchema = new mongoose.Schema({
   number: String,
   query: String,
   delivery: {
@@ -11,7 +11,7 @@ const userSchema = {
     contact: String,
     gate: Number, 
   }
-}
+})
 userSchema.set('toJSON', {
   transform: (document, returned) => {
     returned.id = returned._id.toString();
