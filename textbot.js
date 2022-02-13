@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const User = require('./models/user');
 
 const main = async (req, res) => {
-  return 'welcome to the textbot';
   mongoose.connect(process.env.MONGODB_URI);
   const message = req.body;
   let user = await User.findOne({number: message.From})
