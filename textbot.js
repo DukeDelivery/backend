@@ -12,7 +12,7 @@ const main = async (req, res) => {
       state: 'default'
     });
     user.save();
-    return "Welcome to the Skanska delivery management text-bot. \n Reply 'delivery' to schedule a delivery. \n Reply 'schedule' to see today's schedule.";
+    return "Welcome to the Skanska delivery management text-bot. \nReply 'delivery' to schedule a delivery. \n Reply 'schedule' to see today's schedule.";
   }
   switch (user.state) {
 
@@ -28,7 +28,7 @@ const main = async (req, res) => {
           try {
             user.delivery.date = parseDate(message);
           } catch {
-            return 'Given date could not be understood. Please use MM/DD/YYYY format';
+            return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
           }
           user.delivery.state = 'time';
           user.save();
@@ -37,7 +37,7 @@ const main = async (req, res) => {
           try {
             user.delivery.date.setTime(parseTime(message).getTime());
           } catch {
-            return 'Given time could not be understood. Please use HH:MM XM format.';
+            return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help";
           }
           
           user.delivery.state = 'duration';
@@ -47,7 +47,7 @@ const main = async (req, res) => {
           try {
             user.delivery.duration = parseDuration(message);
           } catch {
-            return 'given duration could not be understood. Please only reply with a number.';
+            return "given duration could not be understood. Please only reply with a number. \nReply 'info' for help";
           }
           user.delivery.state = 'company';
           user.save();
@@ -86,7 +86,8 @@ const main = async (req, res) => {
       delivery.state = undefined;
       delivery.save();
       User.findByIdAndDelete(user._id);
-      return (autoSchedule ? 'YOUR DELIVERY HAS BEEN SCHEDULED' : 'YOUR REQUEST HAS BEEN MADE');
+      return (autoSchedule ? 'Your delivery has been scheduled\nGoodbye' : 'Your delivery request has been made\nGoodbye');
+
     case 'edit':
       if (message.toLowerCase() === 'cancel') {
         user.state = 'default';
@@ -120,6 +121,8 @@ const main = async (req, res) => {
           };
           user.save();
           return 'What is the date for your delivery (MM/DD/YYYY)?';
+        case 'info':
+          return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see today's schedule\nReply 'cancel' to cancel delivery request"
         default:
           if (message.toLowerCase().startsWith('schedule')) {
             return `SCHEDULE OF ${message.substring(8)}`
