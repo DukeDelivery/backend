@@ -40,29 +40,29 @@ const main = async (req, res) => {
             return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help";
           }
           
-          user.delivery.state = 'duration';
+          user.delivery.state = next(user);
           user.save();
-          return 'what is the duration of your delivery (minutes)?';
+          return `what is the ${user.delivery.state} for your delivery?`;
         case 'duration':
           try {
             user.delivery.duration = parseDuration(message);
           } catch {
             return "given duration could not be understood. Please only reply with a number. \nReply 'info' for help";
           }
-          user.delivery.state = 'company';
+          user.delivery.state = next(user);
           user.save();
-          return 'What company is the delivery for?';
+          return `What is the ${user.delivery.state} for your delivery?`;
         default:
           user.delivery[user.delivery.state] = format(message, user.delivery.state);
           user.delivery.state = next(user);
           if (user.delivery.state !== 'complete') {
             user.save();
-            return `What is the ${user.delivery.state.toUpperCase()} for your delivery?`;
+            return `What is the ${user.delivery.state} for your delivery?`;
           } 
           else {
             user.state = 'complete';
             user.save();
-            return displayDelivery(user.delivery);
+            return displayDelivery(user.delivery).concat("\n\n","Reply 'yes' to confirm or 'no' to make changes.");
           }
       }  
     }
@@ -85,7 +85,7 @@ const main = async (req, res) => {
       });
       delivery.state = undefined;
       delivery.save();
-      User.findByIdAndDelete(user._id);
+      User.findByIdAndDelete(user._id).then(x=>{});
       return (autoSchedule ? 'Your delivery has been scheduled\nGoodbye' : 'Your delivery request has been made\nGoodbye');
 
     case 'edit':
@@ -97,11 +97,13 @@ const main = async (req, res) => {
       }
       if (user.delivery.hasOwnProperty(message)) {
         delete user.delivery[message];
-        user.save();
         user.delivery.state = message;
-        return `What is the ${user.delivery.state.toUpperCase()} for your delivery?`;
+        user.state = 'delivery';
+        user.save();
+        return `What is the ${user.delivery.state} for your delivery?`;
       }
-      else return 'given field could not be understood. Please use exact field name from preceding message';
+      else return "given field could not be understood. Please use exact field name from preceding message\nReply 'info' for help";
+    
 
     default:
       switch (message.toLowerCase()) {
@@ -122,12 +124,15 @@ const main = async (req, res) => {
           user.save();
           return 'What is the date for your delivery (MM/DD/YYYY)?';
         case 'info':
-          return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see today's schedule\nReply 'cancel' to cancel delivery request"
+          return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see today's schedule\nReply 'cancel' to cancel delivery request";
+        case 'delete':
+          User.findByIdAndDelete(user._id).then(x =>{});
+          return "Deleted user.";
         default:
           if (message.toLowerCase().startsWith('schedule')) {
             return `SCHEDULE OF ${message.substring(8)}`
           }
-          else return "Your command could not be understood. reply 'help' for a list of commands";
+          else return "Your command could not be understood. reply 'info' for a list of commands";
       }
   }
 };
@@ -141,7 +146,7 @@ const next = (user) => {
 const format = (string, type) => {
   switch (type) {
     case 'gate':
-      return parseInt(string);
+      return 2;
     default:
       return string;
   }
@@ -158,7 +163,7 @@ const parseDuration = (len) => {
 }
 const displayDelivery = (delivery) => {
   let ret = '';
-  const params = ['company', 'description', 'date', 'duration', 'contactName', 'contactNumber', 'gate'];
+  const params = ['date', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate'];
   for (x of params) {
     ret = ret.concat('\n', `${x}: ${delivery[x]}`);
   }
