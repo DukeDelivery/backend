@@ -8,17 +8,19 @@ const main = async (req, res) => {
   if (user === null) {
     user = new User({
       number: message.From,
-      query: 'none'
+      state: 'default'
     });
     await user.save();
     return 'GREETING MESSAGE';
   }
-  if (user.query === 'none') {
+  if (user.state === 'default') {
     switch (message.Body.toLowerCase()) {
       case 'help':
         return 'HELP MESSAGE';
       case 'schedule':
-        User.findByIdAndUpdate()
+        return 'TODAYS SCHEDULE';
+      case 'delivery':
+        return 'DELIVERY MESSAGE';
     }
   }
   return 'RETURNING MESSAGE';

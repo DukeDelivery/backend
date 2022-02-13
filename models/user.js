@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   number: String,
-  query: String,
+  state: String,
   delivery: {
     company: String,
     description: String,
@@ -12,12 +12,12 @@ const userSchema = new mongoose.Schema({
     gate: Number, 
   }
 });
-/*userSchema.set('toJSON', {
+userSchema.set('toJSON', {
   transform: (document, returned) => {
     returned.id = returned._id.toString();
     delete returned._id;
     delete returned.__v;
   }
-});*/
+});
 
 module.exports = mongoose.model('User', userSchema);
