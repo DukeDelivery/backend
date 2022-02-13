@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('./models/user');
 const Delivery = require('./models/delivery');
+const params = ['date', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate'];
 
 const main = async (req, res) => {
   await mongoose.connect(process.env.MONGODB_URI);
@@ -12,7 +13,7 @@ const main = async (req, res) => {
       state: 'default'
     });
     user.save();
-    return "Welcome to the Skanska delivery management text-bot. \nReply 'delivery' to schedule a delivery.\nReply 'schedule' to see today's schedule.\nReply 'info' to see a list of commands.";
+    return "Welcome to the Skanska delivery management text-bot.\nReply 'delivery' to schedule a delivery.\nReply 'schedule' to see today's schedule.\nReply 'info' to see a list of commands.";
   }
   switch (user.state) {
 
@@ -24,18 +25,20 @@ const main = async (req, res) => {
         return "Your delivery request has been cancelled. reply 'delivery' to begin a new request";
       }
       switch (user.delivery.state) {
+
         case 'date':
           try {
-            user.delivery.date = parseDate(message);
+            user.delivery.date = parse(message, 'date');
           } catch {
             return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
           }
           user.delivery.state = 'time';
           user.save();
           return 'What is the time for your delivery (HH:MM XM)';
+
         case 'time':
           try {
-            user.delivery.date.setTime(parseTime(message).getTime());
+            user.delivery.date.setTime(parse(message, 'time').getTime());
           } catch {
             return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help";
           }
@@ -43,17 +46,19 @@ const main = async (req, res) => {
           user.delivery.state = next(user);
           user.save();
           return `what is the ${user.delivery.state} for your delivery?`;
+
         case 'duration':
           try {
-            user.delivery.duration = parseDuration(message);
+            user.delivery.duration = parse(message, 'duration');
           } catch {
             return "given duration could not be understood. Please only reply with a number. \nReply 'info' for help";
           }
           user.delivery.state = next(user);
           user.save();
           return `What is the ${user.delivery.state} for your delivery?`;
+
         default:
-          user.delivery[user.delivery.state] = format(message, user.delivery.state);
+          user.delivery[user.delivery.state] = parse(message, user.delivery.state);
           user.delivery.state = next(user);
           if (user.delivery.state !== 'complete') {
             user.save();
@@ -107,8 +112,10 @@ const main = async (req, res) => {
 
     default:
       switch (message.toLowerCase()) {
+
         case 'schedule':
           return 'TODAYS SCHEDULE';
+
         case 'delivery':
           user.state = 'delivery';
           user.delivery = {
@@ -137,33 +144,27 @@ const main = async (req, res) => {
   }
 };
 const next = (user) => {
-  for (x in user.delivery) {
-    if (x === 'state') continue;
+  for (x of params) {
     if (user.delivery[x] === null) return x;
   }
   return 'complete';
 };
-const format = (string, type) => {
+const parse = (string, type) => {
   switch (type) {
     case 'gate':
-      return 2;
+      return 2; //TODO
+    case 'duration':
+      return 1;
+    case 'date':
+      return new Date();
+    case 'time':
+      return new Date();
     default:
       return string;
   }
 }
-const parseDate = (date) => {
-  if (date === 'date') throw 100;
-  return new Date(); //TODO
-}
-const parseTime = (time) => {
-  return new Date(); //TODO
-}
-const parseDuration = (len) => {
-  return 1; //TODO
-}
 const displayDelivery = (delivery) => {
   let ret = '';
-  const params = ['date', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate'];
   for (x of params) {
     ret = ret.concat('\n', `${x}: ${delivery[x]}`);
   }
