@@ -9,11 +9,11 @@ const main = async (req, res) => {
     user = new User({
       number: message.From,
       query: 'none'
-    })
+    });
     await user.save();
     return 'GREETING MESSAGE';
   }
-  if (query === 'none') {
+  if (user.query === 'none') {
     switch (message.Body.toLowerCase()) {
       case 'help':
         return 'HELP MESSAGE';
@@ -21,7 +21,6 @@ const main = async (req, res) => {
         User.findByIdAndUpdate()
     }
   }
-  if (message.Body.toLowerCase() !== 'delivery')
   return 'RETURNING MESSAGE';
 };
 module.exports = main;
