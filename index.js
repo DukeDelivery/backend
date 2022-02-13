@@ -12,7 +12,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get('/', (req, res) => {
-  res.send(process.env.MONGODB_URI);
+  res.send('server online');
 })
 app.post('/sms', async (req, res) => {
 
