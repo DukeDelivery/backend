@@ -5,18 +5,14 @@ const userSchema = new mongoose.Schema({
   number: String,
   state: String,
   delivery: {
+    state: String,
     company: String,
     description: String,
     date: Date,
-    contact: String,
+    duration: Number,
+    contactName: String,
+    contactNumber: String,
     gate: Number, 
-  }
-});
-userSchema.set('toJSON', {
-  transform: (document, returned) => {
-    returned.id = returned._id.toString();
-    delete returned._id;
-    delete returned.__v;
   }
 });
 
