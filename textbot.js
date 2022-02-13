@@ -12,7 +12,7 @@ const main = async (req, res) => {
       state: 'default'
     });
     user.save();
-    return "Welcome to the Skanska delivery management text-bot. \nReply 'delivery' to schedule a delivery. \n Reply 'schedule' to see today's schedule.";
+    return "Welcome to the Skanska delivery management text-bot. \nReply 'delivery' to schedule a delivery.\nReply 'schedule' to see today's schedule.\nReply 'info' to see a list of commands.";
   }
   switch (user.state) {
 

@@ -6,7 +6,8 @@ const deliverySchema = new mongoose.Schema({
   description: String,
   date: Date,
   duration: Number,
-  contact: String,
+  contactName: String,
+  contactNumber: String,
   gate: Number, 
 });
 module.exports = mongoose.model('Delivery', deliverySchema);
