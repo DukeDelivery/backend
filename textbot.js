@@ -23,6 +23,6 @@ const main = async (req, res) => {
         return 'DELIVERY MESSAGE';
     }
   }
-  return 'RETURNING MESSAGE';
+  return user.id;
 };
 module.exports = main;
