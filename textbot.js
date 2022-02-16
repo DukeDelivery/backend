@@ -106,6 +106,7 @@ const main = async (req, res) => {
       catch {
         return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
       }
+      user.state = 'default';
       return `Schedule of ${date}`
 
     default:
