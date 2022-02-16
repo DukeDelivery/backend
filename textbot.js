@@ -99,13 +99,14 @@ const main = async (req, res) => {
     }
 
     case 'schedule':
+      let date = null;
       try {
-        return schedule(message);
+        date = parse(date, 'date');
       }
       catch {
         return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
       }
-      return schedule(date);
+      return `Schedule of ${date}`
 
     default:
       switch (message.toLowerCase()) {
@@ -171,8 +172,5 @@ const displayDelivery = (delivery) => {
     ret = ret.concat('\n', `${x}: ${delivery[x]}`);
   }
   return ret;
-}
-const schedule = (date) => {
-  return `schedule of ${parse(date, 'date')}`;
 }
 module.exports = main;
