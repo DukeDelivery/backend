@@ -100,7 +100,7 @@ const main = async (req, res) => {
 
     case 'schedule':
       try {
-        const date = parse(message, 'date');
+        return schedule(message);
       }
       catch {
         return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
@@ -136,7 +136,7 @@ const main = async (req, res) => {
         case 'delete':
           User.findByIdAndDelete(user._id).then(x =>{});
           return "Deleted user.";
-          
+
         default:
           if (message.toLowerCase().startsWith('schedule')) {
             return `SCHEDULE OF ${message.substring(8)}`
@@ -173,6 +173,6 @@ const displayDelivery = (delivery) => {
   return ret;
 }
 const schedule = (date) => {
-  return `schedule of ${date}`;
+  return `schedule of ${parse(date, 'date')}`;
 }
 module.exports = main;
