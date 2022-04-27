@@ -1,10 +1,9 @@
 const mongoose = require('mongoose');
 const User = require('./models/user');
 const Delivery = require('./models/delivery');
-const params = ['date', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate'];
+const msg = require('./util/message');
 
 const main = async (req, res) => {
-  await mongoose.connect(process.env.MONGODB_URI);
   const message = req.body.Body.trim();
   let user = await User.findOne({number: req.body.From});
   if (user === null) {
@@ -17,45 +16,25 @@ const main = async (req, res) => {
   }
   switch (user.state) {
 
-    case 'delivery': {
-      if (message.toLowerCase() === 'cancel') {
+    case 'delivery': 
+      if (message.toLowerCase() == 'cancel') {
+        user.delivery = null;
         user.state = 'default';
-        user.delivery = undefined;
         user.save();
-        return "Your delivery request has been cancelled. reply 'delivery' to begin a new request";
+        return 'delivery cancelled';
       }
+      
       switch (user.delivery.state) {
-
-        case 'date':
-          try {
-            user.delivery.date = parse(message, 'date');
-          } catch {
-            return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
-          }
-          user.delivery.state = 'time';
-          user.save();
-          return 'What is the time for your delivery (HH:MM XM)';
 
         case 'time':
           try {
-            user.delivery.date.setTime(parse(message, 'time').getTime());
+            user.delivery.start.setTime(parse(message, 'time').getTime());
           } catch {
-            return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help";
-          }
-          
-          user.delivery.state = next(user);
-          user.save();
-          return `what is the ${user.delivery.state} for your delivery?`;
-
-        case 'duration':
-          try {
-            user.delivery.duration = parse(message, 'duration');
-          } catch {
-            return "given duration could not be understood. Please only reply with a number.\nReply 'info' for help";
+            return msg.error('time');
           }
           user.delivery.state = next(user);
           user.save();
-          return `What is the ${user.delivery.state} for your delivery?`;
+          return msg.prompt(user.delivery.state);
 
         case 'complete':
           if (message.toLowerCase() !== 'yes') {
@@ -65,49 +44,68 @@ const main = async (req, res) => {
           }
           const autoSchedule = true;
           const delivery = new Delivery({
-            ...user.delivery
+            ...user.delivery,
+            end: new Date(new Date(user.delivery.start).getTime() + user.delivery.duration*60000)
           });
+          delivery.duration = undefined;
           delivery.state = undefined;
           delivery.save();
           User.findByIdAndDelete(user._id).then(x=>{});
           return (autoSchedule ? 'Your delivery has been scheduled\nGoodbye' : 'Your delivery request has been made\nGoodbye');
 
         case 'edit':
-          if (user.delivery.hasOwnProperty(message)) {
-            delete user.delivery[message];
-            user.delivery.state = message;
+          if (user.delivery.hasOwnProperty(message.toLowerCase())) {
+            delete user.delivery[message.toLowerCase()];
+            user.delivery.state = message.toLowerCase();
             user.save();
-            return `What is the ${user.delivery.state} for your delivery?`;
+            return msg.prompt(user.delivery.state);
           }
           else return "given field could not be understood. Please use exact field name from preceding message\nReply 'info' for help";
+
         default:
           try {
             user.delivery[user.delivery.state] = parse(message, user.delivery.state);
           } catch {
-            return `given ${user.delivery.state} could not be understood. Please try again.\nReply 'info' for help`;
+            return msg.error(user.delivery.state);
           }
           
           user.delivery.state = next(user);
           user.save();
           if (user.delivery.state !== 'complete') {
-            return `What is the ${user.delivery.state} for your delivery?`;
+            return msg.prompt(user.delivery.state);
           } 
           else {
             return displayDelivery(user.delivery).concat("\n\n","Reply 'yes' to confirm or 'no' to make changes.");
           }
       }  
-    }
+    
 
     case 'schedule':
+      user.state = 'default';
+      user.save();
       let date = null;
       try {
-        date = parse(date, 'date');
+        date = parse(message, 'date');
       }
       catch {
-        return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
+        return msg.error('start');
       }
-      user.state = 'default';
-      return `Schedule of ${date}`
+      const deliveries = await Delivery.find({
+        date: {
+          $gt: new Date('2022-03-22'),
+          $lt: new Date('2022-03-23')
+        }
+      })
+      const minuteFormat = (minutes) => {
+        if (minutes < 10) return '0'.concat(minutes);
+        return minutes;
+      }
+      console.log(deliveries);
+      let ret = 'Deliveries:\n';
+      deliveries.forEach(delivery => {
+        ret = ret.concat(`${delivery.date.getHours()}:${minuteFormat(delivery.date.getMinutes())}- ${delivery.description} for ${delivery.company}\n`);
+      })
+      return ret;
 
     default:
       switch (message.toLowerCase()) {
@@ -123,14 +121,15 @@ const main = async (req, res) => {
             state: 'date',
             company: null,
             description: null,
-            date: null,
+            start: null,
             duration: null,
             contactName: null,
             contactNumber: user.number,
-            gate: null
+            gate: null,
+            location: null
           };
           user.save();
-          return 'What is the date for your delivery (MM/DD/YYYY)?';
+          return msg.prompt('date');
 
         case 'info':
           return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see today's schedule\nReply 'cancel' to cancel delivery request";
@@ -138,6 +137,8 @@ const main = async (req, res) => {
         case 'delete':
           User.findByIdAndDelete(user._id).then(x =>{});
           return "Deleted user.";
+        case 'map':
+          return "Site Map:"
 
         default:
           if (message.toLowerCase().startsWith('schedule')) {
@@ -145,9 +146,13 @@ const main = async (req, res) => {
           }
           else return "Your command could not be understood. reply 'info' for a list of commands";
       }
-  }
+    }
 };
 const next = (user) => {
+  const params = ['start', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate', 'location'];
+  if (user.delivery.state == 'start') {
+    return 'time';
+  }
   for (x of params) {
     if (user.delivery[x] === null) return x;
   }
@@ -156,22 +161,64 @@ const next = (user) => {
 const parse = (string, type) => { //TODO
   switch (type) {
     case 'gate':
-      return 2;
+      const num = parseInt(string);
+      if (num) return num;
+      throw 100;
     case 'duration':
-      return 1;
-    case 'date':
-      return new Date();
+      const num2 = parseInt(string);
+      if (num2) return num2;
+      throw 100;
+    case 'start':
+      const monthLength = [31,28,31,30,31,30,30,31,30,31,30,31];
+      const arr = string.split('/');
+      if (arr.length != 3) return 'incorrect format';
+      let month = 0;
+      let day = 0;
+      let year = 0;
+      try {
+        month = parseInt(arr[0]-1);
+        day = parseInt(arr[1]);
+        year = parseInt(arr[2]); 
+      } catch {
+        throw 100;
+      }
+      if (month < 0 || month > 11) {
+        throw 100;
+      }
+      if (day < 0 || day > monthLength[month]) {
+        throw 100;
+      }
+      return new Date(year, month, day);
     case 'time':
-      return new Date();
+      if (string == '') return null;
+      var time = string.match(/(\d+)(:(\d\d))?\s*(p?)/i);	
+      if (time == null) return null;
+      
+      var hours = parseInt(time[1],10);	 
+      if (hours == 12 && !time[4]) {
+          hours = 0;
+      }
+      else {
+        hours += (hours < 12 && time[4])? 12 : 0;
+      }	
+      var d = new Date();    	    	
+      d.setHours(hours);
+      d.setMinutes(parseInt(time[3],10) || 0);
+      d.setSeconds(0, 0);	 
+      return d;
     default:
       return string;
   }
 }
 const displayDelivery = (delivery) => {
-  let ret = '';
-  for (x of params) {
-    ret = ret.concat('\n', `${x}: ${delivery[x]}`);
-  }
+  const ret = `Date: ${delivery.date}\n
+  Duration: ${delivery.duration} minutes\n
+  Company: ${delivery.company}\n
+  Description: ${delivery.description}\n
+  Gate: ${delivery.gate}\n
+  Contact Name: ${delivery.contactName}\n
+  Contact Number: ${delivery.contactNumber}`;
   return ret;
 }
+
 module.exports = main;
