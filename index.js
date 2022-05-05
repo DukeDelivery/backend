@@ -66,10 +66,6 @@ app.post('/sms', async (req, res) => {
   res.end(twiml.toString());
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '/index.html'));
-})
-
 http.createServer(app).listen(process.env.PORT || 3001, () => {
   console.log('Express server listening on port 3001');
 });
