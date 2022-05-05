@@ -7,7 +7,7 @@ const prompt = (field) => {
     case 'duration':
       return 'How much time will your delivery take (minutes)?';
     case 'time':
-      return 'What is the time for your delivery (HH:MM XM)';
+      return 'What is the time for your delivery (HH:MM XM)?';
     case 'company':
       return 'What is the company for your delivery?';
     case 'description':
@@ -20,28 +20,30 @@ const prompt = (field) => {
       return 'Which gate is your delivery to?';
     case 'location':
       return 'What is the drop-off location for your delivery?';
+    case 'notes':
+      return "Please reply with any additional notes for your delivery (reply 'none' for no note)"
   }
 }
 const error = (field) => {
   switch (field) {
     case 'start':
-      return "Given date could not be understood. Please use MM/DD/YYYY format \nReply 'info' for help";
+      return "Given date could not be understood. Please use MM/DD/YYYY format.\nReply 'info' for help.";
     case 'duration':
-      return "Given duration could not be understood. Please only reply with a number.\nReply 'info' for help";
+      return "Given duration could not be understood. Please only reply with a number.\nReply 'info' for help.";
     case 'time':
-      return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help";
+      return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help.";
     case 'company':
-      return 'COMPANY PROMPT';
+      return "Given company could not be understood.\nReply 'info' for help.";
     case 'description':
-      return 'DESCRIPTION PROMPT';
+      return "Given delivery description could not be understood.\n Reply 'info' for help.";
     case 'contactName':
-      return 'CONTACT NAME PROMPT';
+      return "Given contact name description could not be understood.\n Reply 'info' for help.";
     case 'contactNumber':
-      return 'CONTACT NUMBER PROMPT';
+      return "Given contact number could not be understood.\n Reply 'info' for help.";
     case 'gate':
       return 'given gate not found.';
     case 'location':
-      return 'LoCATION PROMPT';
+      return "Given drop-off location could not be understood.\n Reply 'info' for help.";
   }
 }
 module.exports = {prompt, error};

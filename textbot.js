@@ -3,7 +3,7 @@ const User = require('./models/user');
 const Delivery = require('./models/delivery');
 const msg = require('./util/message');
 
-const main = async (req, res) => {
+const main = async (req) => {
   const message = req.body.Body.trim();
   let user = await User.findOne({number: req.body.From});
   if (user === null) {
@@ -14,6 +14,12 @@ const main = async (req, res) => {
     user.save();
     return "Welcome to the Skanska delivery management text-bot.\nReply 'delivery' to schedule a delivery.\nReply 'schedule' to see today's schedule.\nReply 'info' to see a list of commands.";
   }
+
+  if (message.toLowerCase() === 'delete') {
+    User.findByIdAndDelete(user._id).then(x =>{});
+    return "Deleted user.";
+  }
+  
   switch (user.state) {
 
     case 'delivery': 
@@ -21,7 +27,7 @@ const main = async (req, res) => {
         user.delivery = null;
         user.state = 'default';
         user.save();
-        return 'delivery cancelled';
+        return 'Your delivery has been cancelled.';
       }
       
       switch (user.delivery.state) {
@@ -49,9 +55,12 @@ const main = async (req, res) => {
           });
           delivery.duration = undefined;
           delivery.state = undefined;
+          if (delivery.notes.toLowerCase() === 'none') {
+            delivery.notes = undefined;
+          }
           delivery.save();
           User.findByIdAndDelete(user._id).then(x=>{});
-          return (autoSchedule ? 'Your delivery has been scheduled\nGoodbye' : 'Your delivery request has been made\nGoodbye');
+          return (autoSchedule ? 'Your delivery has been scheduled.\nThank You.' : 'Your delivery request has been made.\nThank You.');
 
         case 'edit':
           if (user.delivery.hasOwnProperty(message.toLowerCase())) {
@@ -60,7 +69,7 @@ const main = async (req, res) => {
             user.save();
             return msg.prompt(user.delivery.state);
           }
-          else return "given field could not be understood. Please use exact field name from preceding message\nReply 'info' for help";
+          else return "Given field could not be understood. Please use exact field name from preceding message.\nReply 'info' for help.";
 
         default:
           try {
@@ -81,21 +90,22 @@ const main = async (req, res) => {
     
 
     case 'schedule':
-      user.state = 'default';
       user.save();
       let date = null;
       try {
         date = parse(message, 'date');
-      }
-      catch {
+      } catch {
         return msg.error('start');
       }
+      user.state = 'default';
       const deliveries = await Delivery.find({
         date: {
           $gt: new Date('2022-03-22'),
           $lt: new Date('2022-03-23')
         }
       })
+      if (deliveries.length() === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
+      // REST OF CASE IS STILL WORK IN PROGRESS
       const minuteFormat = (minutes) => {
         if (minutes < 10) return '0'.concat(minutes);
         return minutes;
@@ -118,7 +128,7 @@ const main = async (req, res) => {
         case 'delivery':
           user.state = 'delivery';
           user.delivery = {
-            state: 'date',
+            state: 'start',
             company: null,
             description: null,
             start: null,
@@ -129,27 +139,21 @@ const main = async (req, res) => {
             location: null
           };
           user.save();
-          return msg.prompt('date');
+          return msg.prompt('start');
 
         case 'info':
           return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see today's schedule\nReply 'cancel' to cancel delivery request";
         
-        case 'delete':
-          User.findByIdAndDelete(user._id).then(x =>{});
-          return "Deleted user.";
         case 'map':
           return "Site Map:"
 
-        default:
-          if (message.toLowerCase().startsWith('schedule')) {
-            return `SCHEDULE OF ${message.substring(8)}`
-          }
-          else return "Your command could not be understood. reply 'info' for a list of commands";
+        default: 
+          return "Your command could not be understood. reply 'info' for a list of commands";
       }
     }
 };
 const next = (user) => {
-  const params = ['start', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate', 'location'];
+  const params = ['start', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate', 'location', 'notes'];
   if (user.delivery.state == 'start') {
     return 'time';
   }
@@ -158,7 +162,7 @@ const next = (user) => {
   }
   return 'complete';
 };
-const parse = (string, type) => { //TODO
+const parse = (string, type) => { 
   switch (type) {
     case 'gate':
       const num = parseInt(string);
@@ -211,13 +215,15 @@ const parse = (string, type) => { //TODO
   }
 }
 const displayDelivery = (delivery) => {
-  const ret = `Date: ${delivery.date}\n
+  const ret = `Start: ${delivery.start}\n
   Duration: ${delivery.duration} minutes\n
   Company: ${delivery.company}\n
   Description: ${delivery.description}\n
   Gate: ${delivery.gate}\n
+  Location: ${delivery.location}\n
   Contact Name: ${delivery.contactName}\n
-  Contact Number: ${delivery.contactNumber}`;
+  Contact Number: ${delivery.contactNumber}\n
+  Additional Notes: ${delivery.notes}`;
   return ret;
 }
 
