@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const User = require('./models/user');
 const Delivery = require('./models/delivery');
+const Admin = require('./models/admin');
 const msg = require('./util/message');
+const { sendText } = require('./util/util')
 
 const main = async (req) => {
   const message = req.body.Body.trim();
@@ -59,6 +61,8 @@ const main = async (req) => {
             delivery.notes = undefined;
           }
           delivery.save();
+          const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
+          Admin.findOne({}).then(x => sendText(x.number, text));
           User.findByIdAndDelete(user._id).then(x=>{});
           return (autoSchedule ? 'Your delivery has been scheduled.\nThank You.' : 'Your delivery request has been made.\nThank You.');
 

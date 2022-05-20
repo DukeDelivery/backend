@@ -8,6 +8,9 @@ const Delivery = require('./models/delivery');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const WorkTime = require('./models/workTime');
+const Admin = require('./models/admin');
+const {sendText, formatDateString} = require('./util/util');
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -18,6 +21,7 @@ mongoose.connect(process.env.MONGODB_URI)
   }
 );
 
+
 const app = express();
 
 app.use(cors());
@@ -26,36 +30,61 @@ app.use(bodyParser.json());
 app.use(express.static('build'));
 
 
-
 app.get('/delivery', async (req, res) => {
   const deliveries = await Delivery.find({});
   res.json(deliveries);
 });
 
 app.delete('/delivery', (req, res) => {
+  const message = `Your delivery of '${req.body.description}' for ${formatDateString(req.body.start)} has been deleted by the administrator.`
+  sendText(req.body.contactNumber, message );
   Delivery.findByIdAndDelete(req.body.id)
     .then(() => res.end('Delivery removed from database'));
 })
 
 app.put('/delivery', (req, res) => {
+  const message = `Your'${req.body.description}' delivery on ${formatDateString(req.body.start)} has been edited by the administrator. See calendar for details.`
+  sendText(req.body.contactNumber, message);
   Delivery.findByIdAndUpdate(req.body.id, {...req.body})
     .then(x => {
-      console.log(req.body);
       res.json(x);
     });
+
 })
 
 app.post('/delivery', (req, res) => {
   const delivery = new Delivery({...req.body});
   delivery.save();
+  const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
+  Admin.findOne({}).then(x => sendText(x.number, text));
   res.end('Delivery added to Database');
 });
 
-app.post('/login', (req, res) => {
-  if (req.body.username === "log" && req.body.password === "in") {
+app.get('/time', (req, res) => {
+  WorkTime.findOne({})
+    .then(x => res.json(x));
+});
+
+app.post('/time', (req, res) => {
+  WorkTime.findByIdAndUpdate(req.body._id, {...req.body})
+    .then(() => res.end('Work hours updated'));
+});
+
+app.post('/admin', (req, res) => {
+  Admin.findByIdAndUpdate(req.body._id, {...req.body})
+    .then(() => res.end('Admin info updated'));
+})
+
+app.post('/login', async (req, res) => {
+  const admin = await Admin.findOne({})
+  if (req.body.username === admin.username && req.body.password === admin.password) {
     res.end('valid');
   }
   else res.end('invalid');
+})
+
+app.get('/map', (req, res) => {
+  res.sendFile(path.join(__dirname, 'images/site_map.png'));
 })
 
 app.post('/sms', async (req, res) => {
