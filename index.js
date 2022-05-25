@@ -35,7 +35,8 @@ app.get('/delivery', async (req, res) => {
   res.json(deliveries);
 });
 
-app.delete('/delivery', (req, res) => {
+app.post('/delete', (req, res) => {
+  console.log(req.body);
   const message = `Your delivery of '${req.body.description}' for ${formatDateString(req.body.start)} has been deleted by the administrator.`
   sendText(req.body.contactNumber, message );
   Delivery.findByIdAndDelete(req.body.id)
@@ -43,6 +44,7 @@ app.delete('/delivery', (req, res) => {
 })
 
 app.put('/delivery', (req, res) => {
+  console.log(req.body);
   const message = `Your'${req.body.description}' delivery on ${formatDateString(req.body.start)} has been edited by the administrator. See calendar for details.`
   sendText(req.body.contactNumber, message);
   Delivery.findByIdAndUpdate(req.body.id, {...req.body})
