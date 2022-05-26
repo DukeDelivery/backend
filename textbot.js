@@ -103,14 +103,14 @@ const main = async (req) => {
       }
       user.state = 'default';
       console.log(date);
-      console.log(date.setDate(date.getDate()+1));
+      console.log(new Date(date.setDate(date.getDate()+1)));
       const deliveries = await Delivery.find({
         start: {
           $gt: date,
-          $lt: date.setDate(date.getDate()+1)
+          $lt: new Date(date.setDate(date.getDate()+1))
         }
       })
-      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
+      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toUTCDateString()}.`
       // REST OF CASE IS STILL WORK IN PROGRESS
       const minuteFormat = (minutes) => {
         if (minutes < 10) return '0'.concat(minutes);
