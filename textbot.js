@@ -110,7 +110,8 @@ const main = async (req) => {
           $lt: new Date(date.setDate(date.getDate()+1))
         }
       })
-      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toUTCDateString()}.`
+      date = new Date(date.setDate(date.getDate()-2));
+      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
       // REST OF CASE IS STILL WORK IN PROGRESS
       const minuteFormat = (minutes) => {
         if (minutes < 10) return '0'.concat(minutes);
