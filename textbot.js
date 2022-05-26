@@ -97,7 +97,7 @@ const main = async (req) => {
       user.save();
       let date = null;
       try {
-        date = parse(message, 'date');
+        date = new Date(parse(message, 'date'));
       } catch {
         return msg.error('start');
       }
