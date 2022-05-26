@@ -102,9 +102,10 @@ const main = async (req) => {
         return msg.error('start');
       }
       user.state = 'default';
+      console.log(date);
       const deliveries = await Delivery.find({
         start: {
-          $gt: date,
+          $gt: date.getUTCDate(),
           $lt: date.setDate(date.getDate()+1)
         }
       })
