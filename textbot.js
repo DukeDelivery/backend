@@ -103,9 +103,10 @@ const main = async (req) => {
       }
       user.state = 'default';
       console.log(date);
+      console.log(date.setDate(date.getDate()+1));
       const deliveries = await Delivery.find({
         start: {
-          $gt: date.getUTCDate(),
+          $gt: date,
           $lt: date.setDate(date.getDate()+1)
         }
       })
@@ -118,7 +119,7 @@ const main = async (req) => {
       console.log(deliveries);
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
-        ret = ret.concat(`${delivery.date.getHours()}:${minuteFormat(delivery.date.getMinutes())}- ${delivery.description} for ${delivery.company}\n`);
+        ret = ret.concat(`${delivery.start.getHours()}:${minuteFormat(delivery.start.getMinutes())}- ${delivery.description} for ${delivery.company}\n`);
       })
       return ret;
 
