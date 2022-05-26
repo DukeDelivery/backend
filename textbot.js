@@ -108,6 +108,7 @@ const main = async (req) => {
           $lt: new Date('2022-03-23')
         }
       })
+      console.log(deliveries);
       if (deliveries.length() === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
       // REST OF CASE IS STILL WORK IN PROGRESS
       const minuteFormat = (minutes) => {
