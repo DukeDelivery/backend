@@ -103,7 +103,7 @@ const main = async (req) => {
       }
       user.state = 'default';
       const deliveries = await Delivery.find({
-        date: {
+        start: {
           $gt: new Date('2022-03-22'),
           $lt: new Date('2022-03-23')
         }
@@ -141,7 +141,8 @@ const main = async (req) => {
             contactName: null,
             contactNumber: user.number,
             gate: null,
-            location: null
+            location: null,
+            notes: null
           };
           user.save();
           return msg.prompt('start');
