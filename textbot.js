@@ -102,15 +102,13 @@ const main = async (req) => {
         return msg.error('start');
       }
       user.state = 'default';
-      console.log(date);
-      console.log(new Date(date.setDate(date.getDate()+1)));
       const deliveries = await Delivery.find({
         start: {
           $gt: date,
           $lt: new Date(date.setDate(date.getDate()+1))
         }
       })
-      date = new Date(date.setDate(date.getDate()-2));
+      date = new Date(date.setDate(date.getDate()-1));
       if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
       // REST OF CASE IS STILL WORK IN PROGRESS
       const minuteFormat = (minutes) => {
