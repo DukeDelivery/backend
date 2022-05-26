@@ -104,7 +104,7 @@ const main = async (req) => {
       user.state = 'default';
       const deliveries = await Delivery.find({
         start: {
-          $gt: date,
+          $gt: new Date(date),
           $lt: new Date(date.setDate(date.getDate()+1))
         }
       })
