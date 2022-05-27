@@ -110,15 +110,10 @@ const main = async (req) => {
       })
       date = new Date(date.setDate(date.getDate()-1));
       if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
-      // REST OF CASE IS STILL WORK IN PROGRESS
-      const minuteFormat = (minutes) => {
-        if (minutes < 10) return '0'.concat(minutes);
-        return minutes;
-      }
       console.log(deliveries);
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
-        ret = ret.concat(`${new Date(delivery.start).toLocaleTimeString()}- ${delivery.description} for ${delivery.company}\n`);
+        ret = ret.concat(`${new Date(new Date(delivery.start).setHours(new Date(delivery.start).getHours()-4)).toLocaleTimeString()}- ${delivery.description} for ${delivery.company}\n`);
       })
       return ret;
 
