@@ -36,7 +36,9 @@ const main = async (req) => {
 
         case 'time':
           try {
+            console.log(new Date(parse(message, 'time')));
             user.delivery.start.setTime(new Date(parse(message, 'time')).getTime());
+
           } catch {
             return msg.error('time');
           }
@@ -215,7 +217,7 @@ const parse = (string, type) => {
   }
 }
 const displayDelivery = (delivery) => {
-  const ret = `Start: ${delivery.start}\n
+  const ret = `Start: ${formatDateString(delivery.start)}\n
   Duration: ${delivery.duration} minutes\n
   Company: ${delivery.company}\n
   Description: ${delivery.description}\n
