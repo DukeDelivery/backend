@@ -39,6 +39,7 @@ const main = async (req) => {
             const d = new Date(parse(message, 'time'));
             user.delivery.start.setHours(d.getHours());
             user.delivery.start.setMinutes(d.getMinutes());
+            user.delivery.state = new Date(user.delivery.state);
             console.log(user.delivery.start);
           } catch {
             return msg.error('time');
