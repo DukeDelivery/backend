@@ -37,7 +37,10 @@ const main = async (req) => {
         case 'time':
           try {
             const d = new Date(parse(message, 'time'));
-            user.delivery.start = new Date(user.delivery.start.setHours(d.getHours()).setMinutes(d.getMinutes()));
+            const start = new Date(user.delivery.start);
+            start.setHours(d.getHours());
+            start.setMinutes(d.getMinutes());
+            user.delivery.start = start;
           } catch {
             return msg.error('time');
           }
