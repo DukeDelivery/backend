@@ -3,7 +3,7 @@ const User = require('./models/user');
 const Delivery = require('./models/delivery');
 const Admin = require('./models/admin');
 const msg = require('./util/message');
-const { sendText } = require('./util/util')
+const { sendText, formatDateString, formatTimeString } = require('./util/util')
 
 const main = async (req) => {
   const message = req.body.Body.trim();
@@ -109,11 +109,11 @@ const main = async (req) => {
         }
       })
       date = new Date(date.setDate(date.getDate()-1));
-      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date.toDateString()}.`
+      if (deliveries.length === 0) return `There are no deliveries scheduled for ${formatDateString(date)}.`
       console.log(deliveries);
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
-        ret = ret.concat(`${new Date(new Date(delivery.start).setHours(new Date(delivery.start).getHours()-4)).toLocaleTimeString()}- ${delivery.description} for ${delivery.company}\n`);
+        ret = ret.concat(`${formatTimeString(new Date(new Date(delivery.start).setHours(new Date(delivery.start).getHours()-4)))}- ${delivery.description} for ${delivery.company}\n`);
       })
       return ret;
 

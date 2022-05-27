@@ -9,4 +9,8 @@ const formatDateString = (string) => {
   return new Date(string).toLocaleString('en-US', {dateStyle: 'medium', timeStyle: 'short'});
 }
 
-module.exports = { fileAt, sendText, formatDateString }
+const formatTimeString = (string)  => {
+  return new Date(string).toLocaleTimeString('en-US');
+}
+
+module.exports = { fileAt, sendText, formatDateString, formatTimeString }
