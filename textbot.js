@@ -118,7 +118,7 @@ const main = async (req) => {
       console.log(deliveries);
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
-        ret = ret.concat(`${delivery.start.getHours()}:${minuteFormat(delivery.start.getMinutes())}- ${delivery.description} for ${delivery.company}\n`);
+        ret = ret.concat(`${new Date(delivery.start).getTime()}- ${delivery.description} for ${delivery.company}\n`);
       })
       return ret;
 
