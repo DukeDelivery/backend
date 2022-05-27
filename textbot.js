@@ -143,6 +143,7 @@ const main = async (req) => {
             location: null,
             notes: null
           };
+          console.log(user.delivery.notes);
           user.save();
           return msg.prompt('start');
 
