@@ -10,7 +10,7 @@ const formatDateString = (string) => {
 }
 
 const formatTimeString = (string)  => {
-  return new Date(string).toLocaleTimeString('en-US', {timeStyle='short'});
+  return new Date(string).toLocaleTimeString('en-US', {timeStyle: 'short'});
 }
 
 module.exports = { fileAt, sendText, formatDateString, formatTimeString }
