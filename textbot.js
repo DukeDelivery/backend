@@ -40,10 +40,10 @@ const main = async (req) => {
             user.delivery.start.setHours(d.getHours());
             user.delivery.start.setMinutes(d.getMinutes());
             user.delivery.start = new Date(user.delivery.start);
-            console.log(user.delivery.start);
           } catch {
             return msg.error('time');
           }
+          console.log(user.delivery.start);
           user.delivery.state = next(user);
           user.save();
           return msg.prompt(user.delivery.state);
