@@ -109,7 +109,7 @@ const main = async (req) => {
         }
       })
       date = new Date(date.setDate(date.getDate()-1));
-      if (deliveries.length === 0) return `There are no deliveries scheduled for ${formatDateString(date)}.`
+      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date}.`
       console.log(deliveries);
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
