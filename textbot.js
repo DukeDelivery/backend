@@ -36,7 +36,7 @@ const main = async (req) => {
 
         case 'time':
           try {
-            user.delivery.start.setTime(parse(message, 'time').getTime());
+            user.delivery.start.setTime(new Date(parse(message, 'time')).getTime());
           } catch {
             return msg.error('time');
           }
@@ -110,7 +110,6 @@ const main = async (req) => {
       }).sort({'start': 1})
       date = new Date(date.setDate(date.getDate()-1));
       if (deliveries.length === 0) return `There are no deliveries scheduled for ${date}.`
-      console.log(deliveries);
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
         ret = ret.concat(`${formatTimeString(new Date(new Date(delivery.start).setHours(new Date(delivery.start).getHours()-4)))}- ${delivery.description} for ${delivery.company}\n`);
@@ -143,7 +142,7 @@ const main = async (req) => {
           return msg.prompt('start');
 
         case 'info':
-          return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see today's schedule\nReply 'cancel' to cancel delivery request";
+          return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see the schedule for a day.\nReply 'cancel' to cancel delivery request";
         
         case 'map':
           return "Site Map:"
@@ -154,7 +153,7 @@ const main = async (req) => {
     }
 };
 const next = (user) => {
-  const params = ['start', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate', 'location', 'notes'];
+  const params = ['start', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate', 'notes', 'location'];
   if (user.delivery.state == 'start') {
     return 'time';
   }
