@@ -84,7 +84,7 @@ const main = async (req) => {
           } catch {
             return msg.error(user.delivery.state);
           }
-          
+          console.log(user.delivery.start);
           user.delivery.state = next(user);
           user.save();
           if (user.delivery.state !== 'complete') {
