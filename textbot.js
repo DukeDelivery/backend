@@ -107,8 +107,7 @@ const main = async (req) => {
           $gt: new Date(date),
           $lt: new Date(date.setDate(date.getDate()+1))
         }
-      }
-        .sort({'start': 1}))
+      }).sort({'start': 1})
       date = new Date(date.setDate(date.getDate()-1));
       if (deliveries.length === 0) return `There are no deliveries scheduled for ${date}.`
       console.log(deliveries);
