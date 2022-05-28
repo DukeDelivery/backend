@@ -31,13 +31,14 @@ app.use(express.static('build'));
 
 
 app.get('/delivery', async (req, res) => {
+  sendText("hello", "hello");
   const deliveries = await Delivery.find({});
   res.json(deliveries);
 });
 
 app.post('/delete', (req, res) => {
   console.log(req.body);
-  const message = `Your delivery of '${req.body.description}' for ${formatDateString(req.body.start)} has been deleted by the administrator.`
+  const message = `Your '${req.body.description}' delivery for ${formatDateString(req.body.start)} has been deleted by the administrator.`
   sendText(req.body.contactNumber, message );
   Delivery.findByIdAndDelete(req.body.id)
     .then(() => res.end('Delivery removed from database'));

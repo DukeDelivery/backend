@@ -7,7 +7,12 @@ const path = require('path');
 const fileAt = (file) => path.join(__dirname, file);
 
 const sendText = (number, message) => {
-  console.log(message);
+  client.messages
+    .create({
+      body: message,
+      from: process.env.NUMBER,
+      to: number
+    })
 }
 const formatDateString = (string) => {
   return new Date(string).toLocaleString('en-US', {dateStyle: 'medium', timeStyle: 'short'});
