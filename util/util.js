@@ -7,6 +7,14 @@ const path = require('path');
 const fileAt = (file) => path.join(__dirname, file);
 
 const sendText = (number, message) => {
+	
+	if(number.includes("+1")) {
+		
+	}
+	else {
+		number = "+1" + number;
+	}
+	
   client.messages
     .create({
       body: message,
