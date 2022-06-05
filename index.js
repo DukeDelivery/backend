@@ -45,7 +45,6 @@ app.post('/delete', (req, res) => {
 })
 
 app.put('/delivery', (req, res) => {
-  console.log(req.body);
   const message = `Your'${req.body.description}' delivery on ${formatDateString(req.body.start)} has been edited by the administrator. See calendar for details.`
   sendText(req.body.contactNumber, message);
   Delivery.findByIdAndUpdate(req.body.id, {...req.body})
