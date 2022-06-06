@@ -90,7 +90,6 @@ const main = async (req) => {
           } catch {
             return msg.error(user.delivery.state);
           }
-          console.log(user.delivery.start);
           user.delivery.state = next(user);
           user.save();
           if (user.delivery.state !== 'complete') {
@@ -201,6 +200,7 @@ const parse = (string, type) => {
       if (day < 0 || day > monthLength[month]) {
         throw 100;
       }
+      if (year < 2000) year += 2000;
       return new Date(year, month, day);
     case 'time':
       if (string == '') return null;
