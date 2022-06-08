@@ -89,6 +89,11 @@ app.get('/map', (req, res) => {
   res.sendFile(path.join(__dirname, 'images/site_map.png'));
 })
 
+app.get('/phone', (req, res) => {
+  Admin.findOne({})
+    .then(x => res.end(process.env.NUMBER));
+})
+
 app.post('/sms', async (req, res) => {
   const twiml = new MessagingResponse();
   const message = twiml.message();
