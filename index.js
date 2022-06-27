@@ -11,6 +11,7 @@ const path = require('path');
 const WorkTime = require('./models/workTime');
 const Admin = require('./models/admin');
 const {sendText, formatDateString} = require('./util/util');
+const { SEC, MIN, HOUR, DAY} = require('./util/time');
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -31,21 +32,20 @@ app.use(express.static('build'));
 
 
 app.get('/delivery', async (req, res) => {
-  sendText("hello", "hello");
   const deliveries = await Delivery.find({});
   res.json(deliveries);
 });
 
 app.post('/delete', (req, res) => {
   console.log(req.body);
-  const message = `Your '${req.body.description}' delivery for ${formatDateString(req.body.start)} has been deleted by the administrator.`
+  const message = `Your '${req.body.description}' delivery for ${req.body.start - 4*HOUR} has been deleted by the administrator.`
   sendText(req.body.contactNumber, message );
   Delivery.findByIdAndDelete(req.body.id)
     .then(() => res.end('Delivery removed from database'));
 })
 
 app.put('/delivery', (req, res) => {
-  const message = `Your'${req.body.description}' delivery on ${formatDateString(req.body.start)} has been edited by the administrator. See calendar for details.`
+  const message = `Your'${req.body.description}' delivery on ${req.body.start - 4*HOUR} has been edited by the administrator. See calendar for details.`
   sendText(req.body.contactNumber, message);
   Delivery.findByIdAndUpdate(req.body.id, {...req.body})
     .then(x => {

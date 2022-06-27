@@ -3,6 +3,7 @@ const User = require('./models/user');
 const Delivery = require('./models/delivery');
 const Admin = require('./models/admin');
 const msg = require('./util/message');
+const { SEC, MIN, HOUR, DAY } = require('./util/time');
 const { sendText, formatDateString, formatTimeString } = require('./util/util')
 
 const main = async (req) => {
@@ -33,18 +34,22 @@ const main = async (req) => {
       }
       
       switch (user.delivery.state) {
+        case 'start':
+          try {
+            user.delivery.start = parse(message, 'date') + 4*HOUR;
+          } catch {
+            return msg.error('start');
+          }
+          user.delivery.state = next(user);
+          user.save();
+          return msg.prompt(user.delivery.state);
 
         case 'time':
           try {
-            const d = new Date(parse(message, 'time'));
-            const start = new Date(user.delivery.start);
-            start.setHours(d.getHours());
-            start.setMinutes(d.getMinutes());
-            user.delivery.start = start;
+            user.delivery.start = user.delivery.start + parse(message, 'time');
           } catch {
             return msg.error('time');
           }
-          console.log(user.delivery.start);
           user.delivery.state = next(user);
           user.save();
           return msg.prompt(user.delivery.state);
@@ -55,15 +60,11 @@ const main = async (req) => {
             user.save();
             return 'Which field needs to be updated?';
           }
-          const autoSchedule = true;
           const delivery = new Delivery({
             ...user.delivery,
-            end: new Date(new Date(user.delivery.start).getTime() + user.delivery.duration*60000)
+            start: user.delivery.start,
+            end: user.delivery.start + user.delivery.duration*MINUTE,
           });
-          const start = new Date(delivery.start).setHours(delivery.start.getHours()+4);
-          const end = new Date(delivery.end).setHours(delivery.end.getHours()+4);
-          delivery.start = start;
-          delivery.end = end;
           delivery.duration = undefined;
           delivery.state = undefined;
           if (delivery.notes.toLowerCase() === 'none') {
@@ -73,7 +74,7 @@ const main = async (req) => {
           const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
           Admin.findOne({}).then(x => sendText(x.number, text));
           User.findByIdAndDelete(user._id).then(x=>{});
-          return (autoSchedule ? 'Your delivery has been scheduled.\nThank You.' : 'Your delivery request has been made.\nThank You.');
+          return 'Your delivery has been scheduled.\nThank You.';
 
         case 'edit':
           if (user.delivery.hasOwnProperty(message.toLowerCase())) {
@@ -102,25 +103,23 @@ const main = async (req) => {
     
 
     case 'schedule':
-      user.save();
       let date = null;
       try {
-        date = new Date(parse(message, 'date'));
+        date = parse(message, 'date');
       } catch {
         return msg.error('start');
       }
       user.state = 'default';
       const deliveries = await Delivery.find({
         start: {
-          $gt: new Date(date),
-          $lt: new Date(date.setDate(date.getDate()+1))
+          $gt: date,
+          $lt: date + HOUR
         }
       }).sort({'start': 1})
-      date = new Date(date.setDate(date.getDate()-1));
       if (deliveries.length === 0) return `There are no deliveries scheduled for ${date}.`
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
-        ret = ret.concat(`${formatTimeString(new Date(new Date(delivery.start).setHours(new Date(delivery.start).getHours()-4)))}- ${delivery.description} for ${delivery.company}\n`);
+        ret = ret.concat(`${delivery.start - 4*HOUR}- ${delivery.description} for ${delivery.company}\n`);
       })
       return ret;
 
@@ -180,7 +179,7 @@ const parse = (string, type) => {
       const num2 = parseInt(string);
       if (num2) return num2;
       throw 100;
-    case 'start':
+    case 'date':
       const monthLength = [31,28,31,30,31,30,30,31,30,31,30,31];
       const arr = string.split('/');
       if (arr.length != 3) return 'incorrect format';
@@ -201,7 +200,7 @@ const parse = (string, type) => {
         throw 100;
       }
       if (year < 2000) year += 2000;
-      return new Date(year, month, day);
+      return new Date(year, month, day).valueOf();
     case 'time':
       if (string == '') return null;
       var time = string.match(/(\d+)(:(\d\d))?\s*(p?)/i);	
@@ -218,13 +217,13 @@ const parse = (string, type) => {
       d.setHours(hours);
       d.setMinutes(parseInt(time[3],10) || 0);
       d.setSeconds(0, 0);	 
-      return d;
+      return (hours*3600000) + (parseInt(time[3],10) || 0)*60000;
     default:
       return string;
   }
 }
 const displayDelivery = (delivery) => {
-  const ret = `Start: ${formatDateString(delivery.start)}\n
+  const ret = `Start: ${delivery.start - 4*HOUR}\n
   Duration: ${delivery.duration} minutes\n
   Company: ${delivery.company}\n
   Description: ${delivery.description}\n
