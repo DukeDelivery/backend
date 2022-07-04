@@ -19,6 +19,8 @@ const deliverySchema = new mongoose.Schema({
 
 deliverySchema.set('toJSON', {
   transform: (doc, ret) => {
+    ret.start = new Date(ret.start).valueOf();
+    ret.end = new Date(ret.end).valueOf();
     ret.id = ret._id.toString();
     delete ret._id;
     delete ret.__v;

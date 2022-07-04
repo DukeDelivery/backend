@@ -57,7 +57,7 @@ app.put('/delivery', (req, res) => {
 app.post('/delivery', (req, res) => {
   const delivery = new Delivery({...req.body});
   delivery.save();
-  const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
+  const text = `Delivery of ${delivery.description} scheduled for ${formatDateString(delivery.start)}}.`
   Admin.findOne({}).then(x => sendText(x.number, text));
   res.end('Delivery added to Database');
 });
