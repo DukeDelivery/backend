@@ -30,7 +30,6 @@ const main = async (req) => {
         user.state = 'default';
         user.save();
         return 'Your delivery has been cancelled.';
-        
       }
       
       switch (user.delivery.state) {
