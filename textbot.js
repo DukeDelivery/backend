@@ -60,10 +60,14 @@ const main = async (req) => {
             ...user.delivery,
             end: new Date(new Date(user.delivery.start).getTime() + user.delivery.duration*60000)
           });
-          const start = new Date(delivery.start).setHours(delivery.start.getHours()+4);
-          const end = new Date(delivery.end).setHours(delivery.end.getHours()+4);
-          delivery.start = start;
-          delivery.end = end;
+          const start = new Date(delivery.start).setHours(new Date(delivery.start).getHours());
+          console.log("__________");
+          console.log(delivery.end);
+          const end = new Date(delivery.end).setHours(new Date(delivery.end).getHours());
+          console.log(new Date(end));
+          console.log("___________")
+          delivery.start = new Date(start);
+          delivery.end = new Date(end);
           delivery.duration = undefined;
           delivery.state = undefined;
           if (delivery.notes.toLowerCase() === 'none') {
