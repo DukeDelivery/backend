@@ -36,29 +36,31 @@ app.get('/delivery', async (req, res) => {
   res.json(deliveries);
 });
 
-app.post('/delete', (req, res) => {
-  console.log(req.body);
-  const message = `Your '${req.body.description}' delivery for ${req.body.start - 4*HOUR} has been deleted by the administrator.`
-  sendText(req.body.contactNumber, message );
-  Delivery.findByIdAndDelete(req.body.id)
+app.get('/delivery/:id', async (req, res) => {
+  const delivery = await Delivery.findById(id);
+  res.json(delivery);
+})
+
+app.delete('/delivery/:id', (req, res) => {
+  //const message = `Your '${req.body.description}' delivery for ${req.body.start - 4*HOUR} has been deleted by the administrator.`
+  //sendText(req.body.contactNumber, message);
+  Delivery.findByIdAndDelete(req.params.id)
     .then(() => res.end('Delivery removed from database'));
 })
 
-app.put('/delivery', (req, res) => {
-  const message = `Your'${req.body.description}' delivery on ${req.body.start - 4*HOUR} has been edited by the administrator. See calendar for details.`
-  sendText(req.body.contactNumber, message);
+app.patch('/delivery/:id', (req, res) => {
+  // const message = `Your'${req.body.description}' delivery on ${req.body.start - 4*HOUR} has been edited by the administrator. See calendar for details.`
+  // sendText(req.body.contactNumber, message);
   Delivery.findByIdAndUpdate(req.body.id, {...req.body})
-    .then(x => {
-      res.json(x);
-    });
+    .then(x => res.json(x));
 
 })
 
 app.post('/delivery', (req, res) => {
   const delivery = new Delivery({...req.body});
   delivery.save();
-  const text = `Delivery of ${delivery.description} scheduled for ${formatDateString(delivery.start)}}.`
-  Admin.findOne({}).then(x => sendText(x.number, text));
+  // const text = `Delivery of ${delivery.description} scheduled for ${formatDateString(delivery.start)}}.`
+  // Admin.findOne({}).then(x => sendText(x.number, text));
   res.end('Delivery added to Database');
 });
 

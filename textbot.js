@@ -2,9 +2,10 @@ const mongoose = require('mongoose');
 const User = require('./models/user');
 const Delivery = require('./models/delivery');
 const Admin = require('./models/admin');
+const WorkTime = require('./models/workTime');
 const msg = require('./util/message');
 const { SEC, MIN, HOUR, DAY } = require('./util/time');
-const { sendText, formatDateString, formatTimeString } = require('./util/util')
+const { sendText, formatDateString, toTimeString } = require('./util/util')
 
 const main = async (req) => {
   const message = req.body.Body.trim();
@@ -45,10 +46,17 @@ const main = async (req) => {
           return msg.prompt(user.delivery.state);
 
         case 'time':
+          const weekdays = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+          let time;
           try {
-            user.delivery.start = user.delivery.start + parse(message, 'time');
+            time = parse(message, 'time');
           } catch {
             return msg.error('time');
+          }
+          const day = weekdays[new Date(user.delivery.start).getUTCDay()];
+          const workTime = await WorkTime.findOne({});
+          if (time < workTime[day].start || time > workTime[day].end) {
+            return `Deliveries on ${day}s must be between ${toTimeString(workTime[day].start)} and ${toTimeString(workTime[day].end)}\nPlease provide a valid time.\nReply 'cancel' to cancel delivery.`
           }
           user.delivery.state = next(user);
           user.save();
@@ -64,16 +72,16 @@ const main = async (req) => {
             ...user.delivery,
             start: user.delivery.start,
             end: user.delivery.start + user.delivery.duration*MINUTE,
+            duration: undefined,
+            state: undefined,
           });
-          delivery.duration = undefined;
-          delivery.state = undefined;
           if (delivery.notes.toLowerCase() === 'none') {
             delivery.notes = undefined;
           }
           delivery.save();
           const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
           Admin.findOne({}).then(x => sendText(x.number, text));
-          User.findByIdAndDelete(user._id).then(x=>{});
+          User.findByIdAndDelete(user._id).then(()=>{});
           return 'Your delivery has been scheduled.\nThank You.';
 
         case 'edit':
