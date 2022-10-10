@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const WorkTime = require('./models/workTime');
 const Admin = require('./models/admin');
-const {sendText, formatDateString} = require('./util/util');
+const {sendText, toDateTimeString} = require('./util/util');
 const { SEC, MIN, HOUR, DAY} = require('./util/time');
 
 mongoose.connect(process.env.MONGODB_URI)
@@ -37,32 +37,43 @@ app.get('/delivery', async (req, res) => {
 });
 
 app.get('/delivery/:id', async (req, res) => {
-  const delivery = await Delivery.findById(id);
+  const delivery = await Delivery.findById(req.params.id);
   res.json(delivery);
-})
-
-app.delete('/delivery/:id', (req, res) => {
-  //const message = `Your '${req.body.description}' delivery for ${req.body.start - 4*HOUR} has been deleted by the administrator.`
-  //sendText(req.body.contactNumber, message);
-  Delivery.findByIdAndDelete(req.params.id)
-    .then(() => res.end('Delivery removed from database'));
-})
-
-app.patch('/delivery/:id', (req, res) => {
-  // const message = `Your'${req.body.description}' delivery on ${req.body.start - 4*HOUR} has been edited by the administrator. See calendar for details.`
-  // sendText(req.body.contactNumber, message);
-  Delivery.findByIdAndUpdate(req.body.id, {...req.body})
-    .then(x => res.json(x));
-
 })
 
 app.post('/delivery', (req, res) => {
   const delivery = new Delivery({...req.body});
   delivery.save();
-  // const text = `Delivery of ${delivery.description} scheduled for ${formatDateString(delivery.start)}}.`
-  // Admin.findOne({}).then(x => sendText(x.number, text));
+  message = `Delivery of ${delivery.description} scheduled for ${toDateTimeString(delivery.start)}}.`
+  Admin.findOne({}).then(x => sendText(x.number, text));
+  sendText(delivery.contactNumber, message);
   res.end('Delivery added to Database');
 });
+
+app.patch('/delivery/:id', async (req, res) => {
+  const delivery = await Delivery.findById(req.body.id);
+  let message;
+  if (req.body.approved === true && delivery.approved === false) {
+    message = `Your '${delivery.description}' delivery on ${toDateTimeString(delivery.start)} has been approved by the administrator.`
+  } else if (req.body.approved === false && delivery.approved === true) {
+    message = `Your '${delivery.description}' delivery on ${toDateTimeString(delivery.start)} has been unapproved by the administrator.`
+  } else {
+    message = `Your '${delivery.description}' delivery on ${toDateTimeString(delivery.start)} has been edited by the administrator. See calendar for details.`
+  }
+  sendText(delivery.contactNumber, message);
+  Delivery.findByIdAndUpdate(req.body.id, {...req.body})
+    .then(x => res.json(x));
+})
+
+app.delete('/delivery/:id', async (req, res) => {
+  const delivery = await Delivery.findById(req.params.id);
+  const message = `Your '${delivery.description}' delivery for ${toDateTimeString(delivery.start)} has been deleted by the administrator.`
+  sendText(delivery.contactNumber, message);
+  delivery.delete()
+    .then(() => res.end('Delivery removed from database'));
+})
+
+
 
 app.get('/time', (req, res) => {
   WorkTime.findOne({})
@@ -92,8 +103,7 @@ app.get('/map', (req, res) => {
 })
 
 app.get('/phone', (req, res) => {
-  Admin.findOne({})
-    .then(x => res.end(process.env.NUMBER));
+  res.end(process.env.NUMBER);
 })
 
 app.post('/sms', async (req, res) => {
