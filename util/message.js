@@ -2,12 +2,14 @@
 
 const prompt = (field) => {
   switch (field) {
-    case 'start':
+    case 'date':
       return 'What is the date for your delivery (MM/DD/YYYY)?';
     case 'duration':
       return 'How much time will your delivery take (minutes)?';
-    case 'time':
-      return 'What is the time for your delivery (HH:MM XM)?';
+    case 'start':
+      return 'What is the start time of your delivery? (HH:MM XM)?';
+    case 'end':
+      return 'What is the end time of your delivery? (HH:MM XM)?';
     case 'company':
       return 'What is the company for your delivery?';
     case 'description':
@@ -26,11 +28,13 @@ const prompt = (field) => {
 }
 const error = (field) => {
   switch (field) {
-    case 'start':
+    case 'date':
       return "Given date could not be understood. Please use MM/DD/YYYY format.\nReply 'info' for help.";
     case 'duration':
       return "Given duration could not be understood. Please only reply with a number.\nReply 'info' for help.";
-    case 'time':
+    case 'start':
+      return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help.";
+    case 'end':
       return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help.";
     case 'company':
       return "Given company could not be understood.\nReply 'info' for help.";

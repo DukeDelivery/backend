@@ -2,8 +2,10 @@ const mongoose = require('mongoose');
 const User = require('./models/user');
 const Delivery = require('./models/delivery');
 const Admin = require('./models/admin');
+const WorkTime = require('./models/workTime');
 const msg = require('./util/message');
-const { sendText, formatDateString, formatTimeString } = require('./util/util')
+const { SEC, MIN, HOUR, DAY } = require('./util/time');
+const { sendText, toDateString, toTimeString, getTime, getWeekday } = require('./util/util');
 
 const main = async (req) => {
   const message = req.body.Body.trim();
@@ -24,7 +26,7 @@ const main = async (req) => {
   
   switch (user.state) {
 
-    case 'delivery': 
+    case 'delivery': {
       if (message.toLowerCase() == 'cancel') {
         user.delivery = null;
         user.state = 'default';
@@ -34,32 +36,82 @@ const main = async (req) => {
       
       switch (user.delivery.state) {
 
-        case 'time':
+        case 'date': {
           try {
-            const d = new Date(parse(message, 'time'));
-            const start = new Date(user.delivery.start);
-            start.setHours(d.getHours());
-            start.setMinutes(d.getMinutes());
-            user.delivery.start = start;
+            user.delivery.date = parse(message, 'date');
           } catch {
-            return msg.error('time');
+            return msg.error('date');
           }
-          console.log(user.delivery.start);
+          const workTime = await WorkTime.findOne({});
+          const day = getWeekday(user.delivery.date);
+          if (!workTime[day].active) {
+            return `Deliveries cannot be scheduled on ${day}s. Please provide another date.\nReply 'cancel' to cancel delivery request.`
+          }
+          console.log(user.delivery.date);
+          user.delivery.state = 'start';
+          user.save();
+          return msg.prompt('start');
+        }
+          
+        case 'start': {
+          try {
+            user.delivery.start = parse(message, 'time');
+          } catch {
+            return msg.error('start');
+          }
+          if (user.delivery.start - new Date().valueOf() < 2*DAY) {
+            user.delivery.state = 'date';
+            user.save();
+            return `Deliveries must be scheduled 48 hours in advance. Please provide another date.\nReply 'cancel' to cancel delivery request.`
+          }
+          const day = getWeekday(user.delivery.start);
+          const workTime = await WorkTime.findOne({});
+          if (user.delivery.start < workTime[day].start || user.delivery.start > workTime[day].end) {
+            return `Deliveries on ${day}s must be between ${toTimeString(workTime[day].start)} and ${toTimeString(workTime[day].end)}\nPlease provide a valid time.\nReply 'cancel' to cancel delivery.`
+          }
+          user.delivery.state = 'end';
+          user.save();
+          return msg.prompt('end');
+        }
+          
+        case 'end': {
+          try {
+            user.delivery.end = parse(message, 'time');
+          } catch {
+            return msg.error('end');
+          }
+          const day = getWeekday(user.delivery.start);
+          const workTime = await WorkTime.findOne({});
+          if (user.delivery.end < workTime[day].start || user.delivery.end > workTime[day].end) {
+            user.delivery.state = 'start';
+            user.delivery.start = undefined;
+            user.delivery.end = undefined;
+            user.save();
+            return `Deliveries on ${day}s must be between ${toTimeString(workTime[day].start)} and ${toTimeString(workTime[day].end)}\nPlease provide new start time.\nReply 'cancel' to cancel delivery.`
+          }
           user.delivery.state = next(user);
           user.save();
+          if (user.delivery.state == 'complete') return displayDelivery(user.delivery).concat("\n\n","Reply 'yes' to confirm or 'no' to make changes.");
           return msg.prompt(user.delivery.state);
-
-        case 'complete':
+        }
+          
+        case 'complete': {
+          console.log(user.delivery.end);
           if (message.toLowerCase() !== 'yes') {
             user.delivery.state = 'edit';
             user.save();
             return 'Which field needs to be updated?';
           }
-          const autoSchedule = true;
           const delivery = new Delivery({
             ...user.delivery,
-            end: new Date(new Date(user.delivery.start).getTime() + user.delivery.duration*60000)
+            start: user.delivery.date + user.delivery.start,
+            end: user.delivery.date + user.delivery.end,
+            approved: false,
+            date: undefined,
+            state: undefined,
           });
+<<<<<<< HEAD
+=======
           const start = new Date(delivery.start).setHours(new Date(delivery.start).getHours());
           console.log("__________");
           console.log(delivery.end);
@@ -70,16 +122,18 @@ const main = async (req) => {
           delivery.end = new Date(end);
           delivery.duration = undefined;
           delivery.state = undefined;
+>>>>>>> main
           if (delivery.notes.toLowerCase() === 'none') {
             delivery.notes = undefined;
           }
           delivery.save();
           const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
           Admin.findOne({}).then(x => sendText(x.number, text));
-          User.findByIdAndDelete(user._id).then(x=>{});
-          return (autoSchedule ? 'Your delivery has been scheduled.\nThank You.' : 'Your delivery request has been made.\nThank You.');
-
-        case 'edit':
+          User.findByIdAndDelete(user._id).then(()=>{});
+          return 'Your delivery has been scheduled.\nThank You.';
+        }
+          
+        case 'edit': {
           if (user.delivery.hasOwnProperty(message.toLowerCase())) {
             delete user.delivery[message.toLowerCase()];
             user.delivery.state = message.toLowerCase();
@@ -87,8 +141,9 @@ const main = async (req) => {
             return msg.prompt(user.delivery.state);
           }
           else return "Given field could not be understood. Please use exact field name from preceding message.\nReply 'info' for help.";
-
-        default:
+        }
+         
+        default: {
           try {
             user.delivery[user.delivery.state] = parse(message, user.delivery.state);
           } catch {
@@ -102,33 +157,34 @@ const main = async (req) => {
           else {
             return displayDelivery(user.delivery).concat("\n\n","Reply 'yes' to confirm or 'no' to make changes.");
           }
-      }  
-    
+        }
+      }    
+    }  
 
-    case 'schedule':
-      user.save();
+    case 'schedule': {
       let date = null;
       try {
-        date = new Date(parse(message, 'date'));
+        date = parse(message, 'date');
       } catch {
         return msg.error('start');
       }
       user.state = 'default';
+      user.save();
       const deliveries = await Delivery.find({
         start: {
-          $gt: new Date(date),
-          $lt: new Date(date.setDate(date.getDate()+1))
+          $gt: date,
+          $lt: date + DAY
         }
       }).sort({'start': 1})
-      date = new Date(date.setDate(date.getDate()-1));
-      if (deliveries.length === 0) return `There are no deliveries scheduled for ${date}.`
+      if (deliveries.length === 0) return `There are no deliveries scheduled for ${toDateString(date)}.`
       let ret = 'Deliveries:\n';
       deliveries.forEach(delivery => {
-        ret = ret.concat(`${formatTimeString(new Date(new Date(delivery.start).setHours(new Date(delivery.start).getHours()-4)))}- ${delivery.description} for ${delivery.company}\n`);
+        ret = ret.concat(`${toTimeString(getTime(delivery.start))}- ${toTimeString(getTime(delivery.end))}: ${delivery.description} for ${delivery.company}\n`);
       })
       return ret;
-
-    default:
+    }
+      
+    default: {
       switch (message.toLowerCase()) {
 
         case 'schedule':
@@ -139,19 +195,11 @@ const main = async (req) => {
         case 'delivery':
           user.state = 'delivery';
           user.delivery = {
-            state: 'start',
-            company: null,
-            description: null,
-            start: null,
-            duration: null,
-            contactName: null,
+            state: 'date',
             contactNumber: user.number,
-            gate: null,
-            location: null,
-            notes: null
           };
           user.save();
-          return msg.prompt('start');
+          return msg.prompt('date');
 
         case 'info':
           return "Reply 'delivery' to schedule a new delivery.\nReply 'schedule' to see the schedule for a day.\nReply 'cancel' to cancel delivery request";
@@ -163,14 +211,13 @@ const main = async (req) => {
           return "Your command could not be understood. reply 'info' for a list of commands";
       }
     }
+      
+    }
 };
 const next = (user) => {
-  const params = ['start', 'duration', 'company', 'description', 'contactName', 'contactNumber', 'gate', 'location', 'notes'];
-  if (user.delivery.state == 'start') {
-    return 'time';
-  }
+  const params = ['company', 'description', 'contactName', 'contactNumber', 'gate', 'location', 'notes'];
   for (x of params) {
-    if (user.delivery[x] === null) return x;
+    if (user.delivery[x] === undefined) return x;
   }
   return 'complete';
 };
@@ -184,17 +231,17 @@ const parse = (string, type) => {
       const num2 = parseInt(string);
       if (num2) return num2;
       throw 100;
-    case 'start':
+    case 'date':
       const monthLength = [31,28,31,30,31,30,30,31,30,31,30,31];
       const arr = string.split('/');
-      if (arr.length != 3) return 'incorrect format';
+      if (arr.length != 3) throw 100;
       let month = 0;
       let day = 0;
       let year = 0;
       try {
         month = parseInt(arr[0]-1);
         day = parseInt(arr[1]);
-        year = parseInt(arr[2]); 
+        year = parseInt(arr[2]);
       } catch {
         throw 100;
       }
@@ -205,7 +252,7 @@ const parse = (string, type) => {
         throw 100;
       }
       if (year < 2000) year += 2000;
-      return new Date(year, month, day);
+      return new Date(year, month, day).valueOf();
     case 'time':
       if (string == '') return null;
       var time = string.match(/(\d+)(:(\d\d))?\s*(p?)/i);	
@@ -217,25 +264,22 @@ const parse = (string, type) => {
       }
       else {
         hours += (hours < 12 && time[4])? 12 : 0;
-      }	
-      var d = new Date();    	    	
-      d.setHours(hours);
-      d.setMinutes(parseInt(time[3],10) || 0);
-      d.setSeconds(0, 0);	 
-      return d;
+      }
+      return (hours*3600000) + (parseInt(time[3],10) || 0)*60000;
     default:
       return string;
   }
 }
 const displayDelivery = (delivery) => {
-  const ret = `Start: ${formatDateString(delivery.start)}\n
-  Duration: ${delivery.duration} minutes\n
-  Company: ${delivery.company}\n
-  Description: ${delivery.description}\n
-  Gate: ${delivery.gate}\n
-  Location: ${delivery.location}\n
-  Contact Name: ${delivery.contactName}\n
-  Contact Number: ${delivery.contactNumber}\n
+  const ret = `Date: ${toDateString(delivery.date)}
+  Start: ${toTimeString(delivery.start)}
+  End: ${toTimeString(delivery.end)}
+  Company: ${delivery.company}
+  Description: ${delivery.description}
+  Gate: ${delivery.gate}
+  Location: ${delivery.location}
+  Contact Name: ${delivery.contactName}
+  Contact Number: ${delivery.contactNumber}
   Additional Notes: ${delivery.notes}`;
   return ret;
 }
