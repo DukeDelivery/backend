@@ -6,6 +6,7 @@ const WorkTime = require('./models/workTime');
 const msg = require('./util/message');
 const { SEC, MIN, HOUR, DAY } = require('./util/time');
 const { sendText, toDateString, toTimeString, getTime, getWeekday } = require('./util/util');
+const { DayContext } = require('twilio/lib/rest/bulkexports/v1/export/day');
 
 const main = async (req) => {
   const message = req.body.Body.trim();
@@ -44,7 +45,7 @@ const main = async (req) => {
           const workTime = await WorkTime.findOne({});
           const day = getWeekday(user.delivery.date);
           if (!workTime[day].active) {
-            return `Deliveries cannot be scheduled on ${day}s. Please provide another date. Reply 'cancel' to cancel delivery request.`
+            return `Deliveries cannot be scheduled on ${day}s. Please provide another date.\nReply 'cancel' to cancel delivery request.`
           }
           console.log(user.delivery.date);
           user.delivery.state = 'start';
@@ -57,6 +58,11 @@ const main = async (req) => {
             user.delivery.start = parse(message, 'time');
           } catch {
             return msg.error('start');
+          }
+          if (user.delivery.start - new Date().valueOf() < 2*DAY) {
+            user.delivery.state = 'date';
+            user.save();
+            return `Deliveries must be scheduled 48 hours in advance. Please provide another date.\nReply 'cancel' to cancel delivery request.`
           }
           const day = getWeekday(user.delivery.start);
           const workTime = await WorkTime.findOne({});
