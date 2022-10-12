@@ -107,22 +107,10 @@ const main = async (req) => {
             start: user.delivery.date + user.delivery.start,
             end: user.delivery.date + user.delivery.end,
             approved: false,
+            completed: false,
             date: undefined,
             state: undefined,
           });
-<<<<<<< HEAD
-=======
-          const start = new Date(delivery.start).setHours(new Date(delivery.start).getHours());
-          console.log("__________");
-          console.log(delivery.end);
-          const end = new Date(delivery.end).setHours(new Date(delivery.end).getHours());
-          console.log(new Date(end));
-          console.log("___________")
-          delivery.start = new Date(start);
-          delivery.end = new Date(end);
-          delivery.duration = undefined;
-          delivery.state = undefined;
->>>>>>> main
           if (delivery.notes.toLowerCase() === 'none') {
             delivery.notes = undefined;
           }

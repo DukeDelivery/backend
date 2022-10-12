@@ -16,6 +16,7 @@ const deliverySchema = new mongoose.Schema({
   trucks: Number,
   notes: String,
   approved: Boolean,
+  completed: Boolean,
 });
 
 deliverySchema.set('toJSON', {
