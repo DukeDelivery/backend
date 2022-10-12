@@ -6,7 +6,6 @@ const WorkTime = require('./models/workTime');
 const msg = require('./util/message');
 const { SEC, MIN, HOUR, DAY } = require('./util/time');
 const { sendText, toDateString, toTimeString, getTime, getWeekday } = require('./util/util');
-const { DayContext } = require('twilio/lib/rest/bulkexports/v1/export/day');
 
 const main = async (req) => {
   const message = req.body.Body.trim();
