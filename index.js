@@ -44,8 +44,8 @@ app.get('/delivery/:id', async (req, res) => {
 app.post('/delivery', (req, res) => {
   const delivery = new Delivery({...req.body});
   delivery.save();
-  message = `Delivery of ${delivery.description} scheduled for ${toDateTimeString(delivery.start)}}.`
-  Admin.findOne({}).then(x => sendText(x.number, text));
+  message = `Delivery of ${delivery.description} scheduled for ${toDateTimeString(delivery.start)}.`
+  Admin.findOne({}).then(x => sendText(x.number, message));
   sendText(delivery.contactNumber, message);
   res.end('Delivery added to Database');
 });
