@@ -36,6 +36,7 @@ const main = async (req) => {
       }
       
       switch (user.delivery.state) {
+
         case 'date': {
           try {
             user.delivery.date = parse(message, 'date');
@@ -95,7 +96,6 @@ const main = async (req) => {
           return msg.prompt(user.delivery.state);
         }
           
-
         case 'complete': {
           console.log(user.delivery.end);
           if (message.toLowerCase() !== 'yes') {
@@ -129,7 +129,6 @@ const main = async (req) => {
             return msg.prompt(user.delivery.state);
           }
           else return "Given field could not be understood. Please use exact field name from preceding message.\nReply 'info' for help.";
-
         }
          
         default: {
@@ -149,6 +148,7 @@ const main = async (req) => {
         }
       }    
     }  
+
     case 'schedule': {
       let date = null;
       try {
@@ -172,7 +172,6 @@ const main = async (req) => {
       return ret;
     }
       
-
     default: {
       switch (message.toLowerCase()) {
 
