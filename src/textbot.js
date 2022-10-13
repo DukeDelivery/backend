@@ -4,8 +4,8 @@ const Delivery = require('./models/delivery');
 const Admin = require('./models/admin');
 const WorkTime = require('./models/workTime');
 const msg = require('./util/message');
-const { SEC, MIN, HOUR, DAY } = require('./util/time');
-const { sendText, toDateString, toTimeString, getTime, getWeekday } = require('./util/util');
+const { SEC, MIN, HOUR, DAY, toDateString, toTimeString, getTime, getWeekday } = require('./util/time');
+const { sendText } = require('./util/util');
 
 const main = async (req) => {
   const message = req.body.Body.trim();

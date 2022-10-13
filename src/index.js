@@ -10,8 +10,8 @@ const mongoose = require('mongoose');
 const path = require('path');
 const WorkTime = require('./models/workTime');
 const Admin = require('./models/admin');
-const {sendText, toDateTimeString} = require('./util/util');
-const { SEC, MIN, HOUR, DAY} = require('./util/time');
+const { sendText } = require('./util/util');
+const { toDateTimeString } = require('./util/time');
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -99,7 +99,7 @@ app.post('/login', async (req, res) => {
 })
 
 app.get('/map', (req, res) => {
-  res.sendFile(path.join(__dirname, 'images/site_map.png'));
+  res.sendFile(path.join(__dirname, '..', 'images/site_map.png'));
 })
 
 app.get('/phone', (req, res) => {
