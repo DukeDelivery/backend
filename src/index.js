@@ -4,14 +4,15 @@ require('dotenv').config();
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
 const bodyParser = require('body-parser');
 const textbot = require('./textbot');
-const Delivery = require('./models/delivery');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-const WorkTime = require('./models/workTime');
 const Admin = require('./models/admin');
-const { sendText } = require('./util/util');
-const { toDateTimeString } = require('./util/time');
+const gate = require('./routers/gate');
+const delivery = require('./routers/delivery');
+const workTime = require('./routers/workTime');
+const company = require('./routers/company')
+
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -30,65 +31,20 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static('build'));
 
+app.use('/delivery', delivery);
 
-app.get('/delivery', async (req, res) => {
-  const deliveries = await Delivery.find({});
-  res.json(deliveries);
-});
+app.use('/gate', gate);
 
-app.get('/delivery/:id', async (req, res) => {
-  const delivery = await Delivery.findById(req.params.id);
-  res.json(delivery);
-})
+app.use('/time', workTime);
 
-app.post('/delivery', (req, res) => {
-  const delivery = new Delivery({...req.body});
-  delivery.save();
-  message = `Delivery of ${delivery.description} scheduled for ${toDateTimeString(delivery.start)}.`
-  Admin.findOne({}).then(x => sendText(x.number, message));
-  sendText(delivery.contactNumber, message);
-  res.end('Delivery added to Database');
-});
-
-app.patch('/delivery/:id', async (req, res) => {
-  const delivery = await Delivery.findById(req.body.id);
-  let message;
-  if (req.body.approved === true && delivery.approved === false) {
-    message = `Your '${delivery.description}' delivery on ${toDateTimeString(delivery.start)} has been approved by the administrator.`
-  } else if (req.body.approved === false && delivery.approved === true) {
-    message = `Your '${delivery.description}' delivery on ${toDateTimeString(delivery.start)} has been unapproved by the administrator.`
-  } else {
-    message = `Your '${delivery.description}' delivery on ${toDateTimeString(delivery.start)} has been edited by the administrator. See calendar for details.`
-  }
-  sendText(delivery.contactNumber, message);
-  Delivery.findByIdAndUpdate(req.body.id, {...req.body})
-    .then(x => res.json(x));
-})
-
-app.delete('/delivery/:id', async (req, res) => {
-  const delivery = await Delivery.findById(req.params.id);
-  const message = `Your '${delivery.description}' delivery for ${toDateTimeString(delivery.start)} has been deleted by the administrator.`
-  sendText(delivery.contactNumber, message);
-  delivery.delete()
-    .then(() => res.end('Delivery removed from database'));
-})
-
-
-
-app.get('/time', (req, res) => {
-  WorkTime.findOne({})
-    .then(x => res.json(x));
-});
-
-app.post('/time', (req, res) => {
-  WorkTime.findByIdAndUpdate(req.body._id, {...req.body})
-    .then(() => res.end('Work hours updated'));
-});
+app.use('/company', company);
 
 app.post('/admin', (req, res) => {
   Admin.findByIdAndUpdate(req.body._id, {...req.body})
     .then(() => res.end('Admin info updated'));
 })
+
+
 
 app.post('/login', async (req, res) => {
   const admin = await Admin.findOne({})
