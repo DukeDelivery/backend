@@ -7,12 +7,12 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  company = new company({...req.body});
-  Company.save().then (() => res.end('Gate added'));
+  const company = new Company({...req.body});
+  company.save().then(() => res.end('Gate added'));
 })
 
 router.delete('/:id', (req, res) => {
-  company.findByIdAndDelete(req.body.id)
+  Company.findByIdAndDelete(req.body.id)
     .then(() => res.end("Gate Removed"));
 })
 

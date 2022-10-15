@@ -7,7 +7,7 @@ const deliverySchema = new mongoose.Schema({
   end: Date,
   contactName: String,
   contactNumber: String,
-  gate: Number, 
+  gate: String, 
   location: String,
   schedName: String,
   schedNumber: String,
