@@ -8,12 +8,17 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const company = new Company({...req.body});
-  company.save().then(() => res.end('Gate added'));
+  company.save().then(() => res.end('Company added'));
 })
 
 router.delete('/:id', (req, res) => {
   Company.findByIdAndDelete(req.body.id)
-    .then(() => res.end("Gate Removed"));
+    .then(() => res.end("Company Removed"));
+})
+
+router.patch('/:id', (req, res) => {
+  Company.findByIdAndUpdate(req.params.id, {...req.body})
+    .then(() => res.end("Company contacts updated"));
 })
 
 module.exports = router;

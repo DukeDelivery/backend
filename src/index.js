@@ -32,19 +32,14 @@ app.use(bodyParser.json());
 app.use(express.static('build'));
 
 app.use('/delivery', delivery);
-
 app.use('/gate', gate);
-
 app.use('/time', workTime);
-
 app.use('/company', company);
 
 app.post('/admin', (req, res) => {
   Admin.findByIdAndUpdate(req.body._id, {...req.body})
     .then(() => res.end('Admin info updated'));
 })
-
-
 
 app.post('/login', async (req, res) => {
   const admin = await Admin.findOne({})
