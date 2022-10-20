@@ -1,15 +1,13 @@
-
-
 const prompt = (field) => {
   switch (field) {
     case 'date':
-      return 'What is the date for your delivery (MM/DD/YYYY)?';
+      return 'What is the date for your delivery (MM/DD)?';
     case 'duration':
       return 'How much time will your delivery take (minutes)?';
     case 'start':
-      return 'What is the start time of your delivery? (HH:MM XM)?';
+      return 'What is the start time of your delivery (HH:MM AM/PM)?';
     case 'end':
-      return 'What is the end time of your delivery? (HH:MM XM)?';
+      return 'What is the duration of your delivery (hours)?';
     case 'company':
       return 'What is the company for your delivery?';
     case 'description':
@@ -23,19 +21,19 @@ const prompt = (field) => {
     case 'location':
       return 'What is the drop-off location for your delivery?';
     case 'notes':
-      return "Please reply with any additional notes for your delivery (reply 'none' for no note)"
+      return "Please reply with any additional notes for your delivery (reply 'done' for no note)"
   }
 }
 const error = (field) => {
   switch (field) {
     case 'date':
-      return "Given date could not be understood. Please use MM/DD/YYYY format.\nReply 'info' for help.";
+      return "Given date could not be understood. Please use MM/DD format.\nReply 'info' for help.";
     case 'duration':
       return "Given duration could not be understood. Please only reply with a number.\nReply 'info' for help.";
     case 'start':
-      return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help.";
+      return "Given time could not be understood. Please use HH:MM AM/PM format.\nReply 'info' for help.";
     case 'end':
-      return "Given time could not be understood. Please use HH:MM XM format.\nReply 'info' for help.";
+      return "Given duration could not be understood. Please provide only a number.\nReply 'info' for help.";
     case 'company':
       return "Given company could not be understood.\nReply 'info' for help.";
     case 'description':
