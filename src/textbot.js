@@ -16,7 +16,7 @@ const main = async (req) => {
       state: 'default'
     });
     user.save();
-    return "Welcome to the Skanska delivery management text-bot.\nReply 'delivery' to schedule a delivery.\nReply 'schedule' to see today's schedule.\nReply 'info' to see a list of commands.";
+    return "Welcome to the Skanska delivery management text-bot.\nReply 'new' to schedule a delivery.\nReply 'today' to see today's schedule.\nReply 'info' to see a list of commands.";
   }
 
   if (message.toLowerCase() === 'delete') {
@@ -45,9 +45,8 @@ const main = async (req) => {
           const workTime = await WorkTime.findOne({});
           const day = getWeekday(user.delivery.date);
           if (!workTime[day].active) {
-            return `Deliveries cannot be scheduled on ${day}s. Please provide another date.\nReply 'cancel' to cancel delivery request.`
+            return `Deliveries cannot be scheduled on ${day}s. Please provide another date (MM/DD).\nReply 'cancel' to cancel delivery request.`
           }
-          console.log(user.delivery.date);
           user.delivery.state = 'start';
           user.save();
           return msg.prompt('start');
@@ -59,7 +58,7 @@ const main = async (req) => {
           } catch {
             return msg.error('start');
           }
-          if (user.delivery.start - new Date().valueOf() < 2*DAY) {
+          if (user.delivery.date + user.delivery.start - new Date().valueOf() < 2*DAY) {
             user.delivery.state = 'date';
             user.save();
             return `Deliveries must be scheduled 48 hours in advance. Please provide another date.\nReply 'cancel' to cancel delivery request.`
@@ -76,7 +75,7 @@ const main = async (req) => {
           
         case 'end': {
           try {
-            user.delivery.end = parse(message, 'time');
+            user.delivery.end = user.delivery.start + parse(message, 'gate')*HOUR;
           } catch {
             return msg.error('end');
           }
@@ -111,13 +110,15 @@ const main = async (req) => {
             date: undefined,
             state: undefined,
           });
-          if (delivery.notes.toLowerCase() === 'none') {
+          if (delivery.notes.toLowerCase() === 'done') {
             delivery.notes = undefined;
           }
           delivery.save();
           const text = `Delivery of ${delivery.description} scheduled for ${delivery.start}.`
           Admin.findOne({}).then(x => sendText(x.number, text));
-          User.findByIdAndDelete(user._id).then(()=>{});
+          user.delivery = undefined;
+          user.state = 'default';
+          user.save();
           return 'Your delivery has been scheduled.\nThank You.';
         }
           
@@ -154,7 +155,7 @@ const main = async (req) => {
       try {
         date = parse(message, 'date');
       } catch {
-        return msg.error('start');
+        return msg.error('date');
       }
       user.state = 'default';
       user.save();
@@ -178,9 +179,25 @@ const main = async (req) => {
         case 'schedule':
           user.state = 'schedule';
           user.save();
-          return 'What date (MM/DD/YYYY) do you want to view?';
+          return 'What date (MM/DD) do you want to view?';
+        case 'today':
+          const today = new Date()
+          today.setHours(0,0, 0, 0);
+          const date = today.valueOf();
+          const deliveries = await Delivery.find({
+            start: {
+              $gt: date,
+              $lt: date + DAY
+            }
+          }).sort({'start': 1})
+          if (deliveries.length === 0) return `There are no deliveries scheduled for ${toDateString(date)}.`
+          let ret = 'Deliveries:\n';
+          deliveries.forEach(delivery => {
+            ret = ret.concat(`${toTimeString(getTime(delivery.start))}- ${toTimeString(getTime(delivery.end))}: ${delivery.description} for ${delivery.company}\n`);
+          })
+          return ret;
 
-        case 'delivery':
+        case 'new':
           user.state = 'delivery';
           user.delivery = {
             state: 'date',
@@ -215,31 +232,43 @@ const parse = (string, type) => {
       const num = parseInt(string);
       if (num) return num;
       throw 100;
-    case 'duration':
-      const num2 = parseInt(string);
-      if (num2) return num2;
-      throw 100;
     case 'date':
       const monthLength = [31,28,31,30,31,30,30,31,30,31,30,31];
-      const arr = string.split('/');
-      if (arr.length != 3) throw 100;
       let month = 0;
       let day = 0;
-      let year = 0;
-      try {
-        month = parseInt(arr[0]-1);
-        day = parseInt(arr[1]);
-        year = parseInt(arr[2]);
-      } catch {
-        throw 100;
+      let year = new Date().getFullYear();
+      if (string === 'today') {
+        date = new Date()
+        date.setHours(0, 0, 0, 0);
+        return date.valueOf();
       }
-      if (month < 0 || month > 11) {
-        throw 100;
+      else if (string === 'yesterday') {
+        date = new Date()
+        date.setHours(0, 0, 0, 0);
+        return date.valueOf() - DAY;
       }
-      if (day < 0 || day > monthLength[month]) {
-        throw 100;
+      else if (string === 'tomorrow') {
+        date = new Date()
+        date.setHours(0, 0, 0, 0);
+        return date.valueOf() + DAY;
       }
-      if (year < 2000) year += 2000;
+      else {
+        const arr = string.split('/');
+        if (arr.length != 2) throw 100;
+        try {
+          month = parseInt(arr[0]-1);
+          day = parseInt(arr[1]);
+        } catch {
+          throw 100;
+        }
+        if (month < 0 || month > 11) {
+          throw 100;
+        }
+        if (day < 0 || day > monthLength[month]) {
+          throw 100;
+        }
+      }
+      if(new Date().getMonth() > month) year++;
       return new Date(year, month, day).valueOf();
     case 'time':
       if (string == '') return null;
